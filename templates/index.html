@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Life Seconds</title>
+
+<style>
+html, body {
+    margin: 0;
+    height: 100%;
+    background: black;
+    color: white;
+    font-family: system-ui, sans-serif;
+}
+
+.container {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: opacity 1s;
+}
+
+.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+form {
+    display: grid;
+    gap: 10px;
+    width: 300px;
+}
+
+input, button {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.results {
+    text-align: center;
+}
+
+.lived {
+    font-size: 22px;
+    opacity: 0.6;
+}
+
+.remaining {
+    font-size: 64px;
+    margin-top: 20px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="inputScreen" class="container">
+    <form id="dobForm">
+        <input type="number" placeholder="Year" id="year" required>
+        <input type="number" placeholder="Month" id="month" min="1" max="12" required>
+        <input type="number" placeholder="Day" id="day" min="1" max="31" required>
+        <input type="number" placeholder="Hour" id="hour" min="0" max="23" required>
+        <input type="number" placeholder="Minute" id="minute" min="0" max="59" required>
+        <button type="submit">Enter</button>
+    </form>
+</div>
+
+<div id="resultScreen" class="container hidden">
+    <div class="results">
+        <div class="lived" id="lived"></div>
+        <div class="remaining" id="remaining"></div>
+    </div>
+</div>
+
+<script>
+let livedSeconds, remainingSeconds, startTimestamp;
+
+document.getElementById("dobForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+        year: year.value,
+        month: month.value,
+        day: day.value,
+        hour: hour.value,
+        minute: minute.value
+    };
+
+    const res = await fetch("/calculate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    livedSeconds = data.seconds_lived;
+    remainingSeconds = data.seconds_left;
+    startTimestamp = data.timestamp;
+
+    inputScreen.classList.add("hidden");
+    resultScreen.classList.remove("hidden");
+
+    updateDisplay();
+    setInterval(tick, 1000);
+});
+
+function tick() {
+    livedSeconds += 1;
+    remainingSeconds = Math.max(0, remainingSeconds - 1);
+    updateDisplay();
+}
+
+function updateDisplay() {
+    lived.innerText = `Seconds lived:\n${livedSeconds.toLocaleString()}`;
+    remaining.innerText = `Seconds remaining:\n${remainingSeconds.toLocaleString()}`;
+}
+</script>
+
+</body>
+</html>
